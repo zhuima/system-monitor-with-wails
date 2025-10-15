@@ -31,7 +31,10 @@
       "fileversion": "1.0.0.0",
       "productversion": "1.0.0.0",
       "companyname": "Your Company",
-      "productname": "System Monitor"
+      "productname": "System Monitor",
+      "webview2": {
+        "strategy": "embed"
+      }
     },
     "macos": {
       "icon": "build/app.icns",

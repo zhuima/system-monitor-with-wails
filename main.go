@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
+	"runtime/debug"
 	"time"
 
 	"github.com/wailsapp/wails/v2"
@@ -37,7 +39,24 @@ func NewApp() *App {
 
 // OnStartup 应用程序启动时的回调函数
 func (a *App) OnStartup(ctx context.Context) {
+	// 添加全局 panic 恢复
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("🚨 OnStartup panic recovered: %v", r)
+			log.Printf("Stack trace: %s", debug.Stack())
+
+			// 写入错误日志
+			if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
+				debugLog := log.New(debugLogFile, "PANIC: ", log.LstdFlags)
+				debugLog.Printf("OnStartup panic: %v", r)
+				debugLog.Printf("Stack: %s", debug.Stack())
+				debugLogFile.Close()
+			}
+		}
+	}()
+
 	a.ctx = ctx
+	log.Println("🚀 系统监控应用开始启动...")
 
 	// 创建调试日志文件
 	debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -47,6 +66,8 @@ func (a *App) OnStartup(ctx context.Context) {
 		debugLog.Println("=== Wails 应用启动调试开始 ===")
 		debugLog.Printf("启动时间: %s", time.Now().Format("2006-01-02 15:04:05"))
 		debugLog.Printf("上下文: %v", ctx != nil)
+		debugLog.Printf("操作系统: %s", runtime.GOOS)
+		debugLog.Printf("架构: %s", runtime.GOARCH)
 		debugLog.Println("开始初始化配置...")
 	}
 
@@ -82,8 +103,9 @@ func (a *App) OnStartup(ctx context.Context) {
 	}
 
 	// 初始化服务 - 添加错误处理
+	log.Println("🔧 正在初始化服务...")
 	if err := a.initializeServicesSafe(ctx); err != nil {
-		log.Printf("Error initializing services: %v", err)
+		log.Printf("⚠️ 服务初始化出错: %v", err)
 		if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
 			debugLog := log.New(debugLogFile, "DEBUG: ", log.LstdFlags)
 			debugLog.Printf("服务初始化失败: %v", err)
@@ -93,7 +115,9 @@ func (a *App) OnStartup(ctx context.Context) {
 
 		// 至少创建基本的事件管理器
 		a.eventManager = services.NewEventManager(ctx)
+		log.Println("✅ 基本事件管理器创建成功")
 	} else {
+		log.Println("✅ 所有服务初始化成功")
 		if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
 			debugLog := log.New(debugLogFile, "DEBUG: ", log.LstdFlags)
 			debugLog.Println("服务初始化完成")
@@ -126,25 +150,33 @@ func (a *App) OnStartup(ctx context.Context) {
 
 // initializeServicesSafe 安全地初始化服务
 func (a *App) initializeServicesSafe(ctx context.Context) error {
+	// 添加 panic 恢复
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("🚨 initializeServicesSafe panic recovered: %v", r)
+		}
+	}()
+
 	// 初始化事件管理器
 	a.eventManager = services.NewEventManager(ctx)
+	log.Println("✅ 事件管理器初始化成功")
 
 	// 初始化存储服务
 	storageService, err := services.NewStorageService(a.config.GetDatabasePath())
 	if err != nil {
-		log.Printf("Warning: Failed to initialize storage service: %v", err)
+		log.Printf("⚠️ 存储服务初始化失败: %v", err)
 		storageService = nil
 	} else {
-		log.Println("Storage service initialized successfully")
+		log.Println("✅ 存储服务初始化成功")
 		a.storageService = storageService
 	}
 
 	// 初始化告警服务
 	a.alertingService = services.NewAlertingService(a.config, a.eventManager)
 	if err := a.alertingService.CreateDefaultRules(); err != nil {
-		log.Printf("Warning: Failed to create default alert rules: %v", err)
+		log.Printf("⚠️ 创建默认告警规则失败: %v", err)
 	} else {
-		log.Println("Alert rules created successfully")
+		log.Println("✅ 告警规则创建成功")
 	}
 
 	// 初始化监控服务
@@ -152,22 +184,30 @@ func (a *App) initializeServicesSafe(ctx context.Context) error {
 	if storageService != nil {
 		a.monitorService.SetStorageService(storageService)
 	}
+	log.Println("✅ 监控服务初始化成功（将在 OnDomReady 中启动）")
 
-	// 临时禁用监控服务启动以避免潜在崩溃
-	// TODO: 修复监控服务启动问题
-	// if err := a.monitorService.Start(); err != nil {
-	//     log.Printf("Warning: Failed to start monitoring: %v", err)
-	// } else {
-	//     log.Println("Monitoring service started successfully")
-	// }
-	log.Println("监控服务已临时禁用以调试窗口关闭问题")
-
-	log.Println("All services initialized successfully")
+	log.Println("🎉 所有服务初始化完成")
 	return nil
 }
 
 // OnDomReady DOM加载完成时的回调函数
 func (a *App) OnDomReady(ctx context.Context) {
+	// 添加 panic 恢复
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("🚨 OnDomReady panic recovered: %v", r)
+			log.Printf("Stack trace: %s", debug.Stack())
+
+			// 写入错误日志
+			if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
+				debugLog := log.New(debugLogFile, "PANIC: ", log.LstdFlags)
+				debugLog.Printf("OnDomReady panic: %v", r)
+				debugLog.Printf("Stack: %s", debug.Stack())
+				debugLogFile.Close()
+			}
+		}
+	}()
+
 	// 立即写入调试日志
 	if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
 		debugLog := log.New(debugLogFile, "DEBUG: ", log.LstdFlags)
@@ -176,12 +216,18 @@ func (a *App) OnDomReady(ctx context.Context) {
 	}
 	log.Println("🎯 OnDomReady 开始执行")
 
-	// 启动监控服务，提供真实数据
+	// 不要延迟启动，立即启动监控服务（但增加错误处理）
 	if a.monitorService != nil {
-		a.monitorService.Start()
-		log.Println("✅ 监控服务已启动")
+		log.Println("📊 正在启动监控服务...")
+		if err := a.monitorService.Start(); err != nil {
+			log.Printf("⚠️ 监控服务启动失败: %v", err)
+			// 不让这个错误导致应用崩溃，继续运行
+			log.Println("🔄 应用将在无监控服务模式下继续运行")
+		} else {
+			log.Println("✅ 监控服务已启动")
+		}
 	} else {
-		log.Println("⚠️ 监控服务为空")
+		log.Println("⚠️ 监控服务为空，应用将无监控功能")
 	}
 
 	// 立即写入结束日志
@@ -354,29 +400,66 @@ func (a *App) GetSystemInfo() (models.SystemInfo, error) {
 
 // main 主函数
 func main() {
+	// 添加全局 panic 恢复
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("🚨 Main panic recovered: %v", r)
+			log.Printf("Stack trace: %s", debug.Stack())
+
+			// 写入错误日志
+			if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
+				debugLog := log.New(debugLogFile, "MAIN PANIC: ", log.LstdFlags)
+				debugLog.Printf("Main panic: %v", r)
+				debugLog.Printf("Stack: %s", debug.Stack())
+				debugLogFile.Close()
+			}
+		}
+	}()
+
+	log.Println("🚀 系统监控应用启动中...")
+
 	// 创建应用程序实例
 	app := NewApp()
 
-	// 配置Wails选项
+	// 配置Wails选项 - 针对 Windows 优化
 	opts := &options.App{
-		Title:            "System Monitor",
-		Width:            1200,
-		Height:           800,
-		MinWidth:         800,
-		MinHeight:        600,
+		Title:            "系统监控器",
+		Width:            1400,
+		Height:           900,
+		MinWidth:         1000,
+		MinHeight:        700,
 		BackgroundColour: &options.RGBA{R: 24, G: 24, B: 27, A: 1},
 		AssetServer:      &assetserver.Options{Assets: assets},
 		OnStartup:        app.OnStartup,
 		OnDomReady:       app.OnDomReady,
 		OnBeforeClose:    app.OnBeforeClose,
 		OnShutdown:       app.OnShutdown,
+		Frameless:        false, // Windows 下使用有边框窗口，更稳定
+		DisableResize:    false,
+		Fullscreen:       false,
+		StartHidden:      false,
+		HideWindowOnClose: false,
 		Bind: []interface{}{
 			app,
 		},
 	}
 
 	// 启动应用程序
+	log.Println("🎯 正在启动 Wails 应用...")
 	if err := wails.Run(opts); err != nil {
-		log.Fatal("Error:", err.Error())
+		log.Printf("❌ 应用启动失败: %v", err)
+
+		// 写入错误日志
+		if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
+			debugLog := log.New(debugLogFile, "ERROR: ", log.LstdFlags)
+			debugLog.Printf("Wails 启动失败: %v", err)
+			debugLogFile.Close()
+		}
+
+		// 不使用 log.Fatal，而是优雅退出
+		log.Printf("应用将退出，错误: %v", err)
+		os.Exit(1)
 	}
+
+	log.Println("✅ 应用正常退出")
 }
