@@ -1,0 +1,57 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "system-monitor",
+  "author": {
+    "name": "zhuima"
+  },
+  "version": "2",
+  "description": "跨平台系统监控工具",
+  "frontend": {
+    "dir": "./frontend",
+    "install": "npm install",
+    "build": "npm run build",
+    "dev": "npm run dev",
+    "package": {
+      "manager": "npm"
+    }
+  },
+  "backend": {
+    "dir": "./",
+    "go": {
+      "main": "main.go",
+      "ldflags": "-s -w"
+    }
+  },
+  "build": {
+    "targets": ["windows", "darwin", "linux"],
+    "upx": true,
+    "upxflags": ["--best", "--lzma"],
+    "windows": {
+      "icon": "build/app.ico",
+      "fileversion": "1.0.0.0",
+      "productversion": "1.0.0.0",
+      "companyname": "Your Company",
+      "productname": "System Monitor"
+    },
+    "macos": {
+      "icon": "build/app.icns",
+      "category": "public.app-category.utilities",
+      "info_plist": {
+        "CFBundleName": "System Monitor",
+        "CFBundleDisplayName": "System Monitor",
+        "CFBundleVersion": "1.0.0",
+        "CFBundleShortVersionString": "1.0.0",
+        "LSUIElement": false,
+        "NSHighResolutionCapable": true
+      }
+    },
+    "linux": {
+      "icon": "build/app.png",
+      "category": "SystemMonitoring"
+    }
+  },
+  "nsisType": "multiple",
+  "obfuscated": false,
+  "garbleargs": "",
+  "runNonNativeBuildHooks": false
+}
