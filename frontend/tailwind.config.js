@@ -68,6 +68,18 @@ export default {
           800: '#1f2937',
           900: '#111827',
         },
+        cream: {
+          50: '#fefdf8',
+          100: '#fefdf1',
+          200: '#fefce8',
+          300: '#fef3c7',
+          400: '#fde68a',
+          500: '#f59e0b',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

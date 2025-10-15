@@ -24,11 +24,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'src/main-layout-simple.tsx'),
-      },
-    },
   },
   server: {
     port: 3000,

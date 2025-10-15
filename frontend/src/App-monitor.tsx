@@ -2,73 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { Cpu, MemoryStick, HardDrive, Network, Activity } from 'lucide-react'
 import { SystemData } from './types/system'
 
-// API 调用函数 - 尝试连接真实后端
-async function getSystemData(): Promise<SystemData> {
-  try {
-    // 尝试使用 Wails API
-    console.log('🔗 尝试连接 Wails API...')
-
-    // 方法1: 尝试直接访问全局对象
-    if (typeof window !== 'undefined' && (window as any).go && (window as any).go.main && (window as any).go.main.App) {
-      console.log('✅ 找到全局 Wails API 对象')
-      const response = await (window as any).go.main.App.GetSystemData()
-      console.log('✅ 通过全局 API 获取到数据:', response)
-      return response
-    }
-
-    // 方法2: 尝试使用标准导入
-    console.log('🔍 尝试标准导入 Wails 模块...')
-    const { GetSystemData } = await import('../wailsjs/go/main/App')
-    const response = await GetSystemData()
-    console.log('✅ 通过标准导入获取到数据:', response)
-    return response
-
-  } catch (error) {
-    console.warn('⚠️ 无法获取真实数据，使用模拟数据:', error)
-
-    // 如果所有方法都失败，返回模拟数据，但添加真实感的变化
-    const mockData = getMockSystemData()
-
-    // 模拟真实的数据变化
-    const timestamp = new Date().toISOString()
-    const randomFactor = Math.random()
-
-    return {
-      ...mockData,
-      cpu: {
-        ...mockData.cpu,
-        usage: 20 + randomFactor * 60, // 20-80% CPU 使用率
-        usage_per_core: mockData.cpu.usage_per_core.map(() => 15 + Math.random() * 70),
-        load1: 0.5 + randomFactor * 2,
-        load5: 0.8 + randomFactor * 2,
-        load15: 1.2 + randomFactor * 2,
-        timestamp
-      },
-      memory: {
-        ...mockData.memory,
-        used_percent: 30 + randomFactor * 50, // 30-80% 内存使用率
-        available: mockData.memory.total * (1 - (0.3 + randomFactor * 0.5)),
-        used: mockData.memory.total * (0.3 + randomFactor * 0.5),
-        timestamp
-      },
-      disk: mockData.disk.map(disk => ({
-        ...disk,
-        used_percent: 20 + Math.random() * 60, // 20-80% 磁盘使用率
-        free: disk.total * (1 - (0.2 + Math.random() * 0.6)),
-        used: disk.total * (0.2 + Math.random() * 0.6),
-        timestamp
-      })),
-      network: mockData.network.map(network => ({
-        ...network,
-        bytes_sent: network.bytes_sent + Math.floor(Math.random() * 1024 * 1024), // 增加上传流量
-        bytes_recv: network.bytes_recv + Math.floor(Math.random() * 1024 * 1024), // 增加下载流量
-        packets_sent: network.packets_sent + Math.floor(Math.random() * 100),
-        packets_recv: network.packets_recv + Math.floor(Math.random() * 200),
-        timestamp
-      })),
-      timestamp
-    }
-  }
+// 使用纯模拟数据，避免 API 调用导致崩溃
+function getSystemData(): SystemData {
+  return getMockSystemData()
 }
 
 // 模拟系统数据作为fallback

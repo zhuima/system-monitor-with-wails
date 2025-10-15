@@ -1,0 +1,6 @@
+.claude/
+docs/
+frontend/dist/
+frontend/node_modules
+dist-windows/
+build/
