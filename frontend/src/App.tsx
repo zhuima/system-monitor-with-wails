@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Processes from './pages/Processes'
 import History from './pages/History'
 import Alerts from './pages/Alerts'
+import About from './pages/About'
 import Settings from './pages/Settings'
 import { useAppStore } from './stores/appStore'
 import { useSystemData } from './hooks/useSystemData'
@@ -67,6 +68,7 @@ function App() {
           <Route path="processes" element={<Processes />} />
           <Route path="history" element={<History />} />
           <Route path="alerts" element={<Alerts />} />
+          <Route path="about" element={<About />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

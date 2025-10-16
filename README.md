@@ -117,6 +117,20 @@ Start-Process -FilePath "$env:TEMP\MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
 
 # 或者直接使用 wails 命令
 wails build --platform windows/amd64 --clean --ldflags "-s -w -H windowsgui" --tags "production" --skipbindings
+
+# 或者直接使用 wails 命令， Debug 模式
+wails build --platform windows/amd64 --clean --ldflags "-s -w -H windowsgui" --tags "production"  -devtools --skipbindings
+
+
+可选进一步加固（非必须，但能提升健壮性）
+
+- 日志空指针防护：在 main.go 部分方法中（例如 OnShutdown , KillProcess , UpdateConfig 等），对 a.logger 增加 nil 判断，避免当日志初始化失败时调用导致 panic。
+- 数据与日志路径改为 OS 专用应用目录：
+  - 使用 utils.GetAppDataDir() （Windows: %APPDATA%/system-monitor ）作为默认 data/ 与日志文件目录，提升写入成功率与权限兼容性。
+  - 在 NewStorageService 中确保 dbPath 的父目录存在：对 filepath.Dir(dbPath) 执行 os.MkdirAll ，防止首次运行时因为目录不存在导致数据库初始化失败。
+
+
+
 ```
 
 ## 项目状态

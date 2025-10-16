@@ -45,6 +45,11 @@ const navigation = [
     icon: Bell,
   },
   {
+    name: '关于应用',
+    href: '/about',
+    icon: Info,
+  },
+  {
     name: '设置',
     href: '/settings',
     icon: Settings,
