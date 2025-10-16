@@ -134,24 +134,36 @@ func getProcessInfo(pid int32) (*ProcessInfo, error) {
 	// pgid, _ := p.Pgid() // gopsutil可能不支持此字段
 	numThreads, _ := p.NumThreads()
 
-	// 内存信息
-	memInfo, _ := p.MemoryInfo()
-	memPercent, _ := p.MemoryPercent()
+    // 内存信息（在 Windows 上可能返回 nil，需防护）
+    memInfo, _ := p.MemoryInfo()
+    memPercent, _ := p.MemoryPercent()
 
-	// CPU信息
-	cpuPercent, _ := p.CPUPercent()
-	times, _ := p.Times()
-	processTimes := ProcessTimes{
-		User:    times.User,
-		System:  times.System,
-		Idle:    times.Idle,
-		Nice:    times.Nice,
-		Iowait:  times.Iowait,
-		Irq:     times.Irq,
-		Softirq: times.Softirq,
-		Steal:   times.Steal,
-		Guest:   times.Guest,
-	}
+    var memRSS uint64
+    var memVMS uint64
+    if memInfo != nil {
+        memRSS = memInfo.RSS
+        memVMS = memInfo.VMS
+    }
+
+    // CPU信息（Times 在不同平台的字段支持差异较大，需防护）
+    cpuPercent, _ := p.CPUPercent()
+    times, _ := p.Times()
+    var processTimes ProcessTimes
+    if times != nil {
+        processTimes = ProcessTimes{
+            User:    times.User,
+            System:  times.System,
+            Idle:    times.Idle,
+            Nice:    times.Nice,
+            Iowait:  times.Iowait,
+            Irq:     times.Irq,
+            Softirq: times.Softirq,
+            Steal:   times.Steal,
+            Guest:   times.Guest,
+        }
+    } else {
+        processTimes = ProcessTimes{}
+    }
 
 	// 时间信息
 	createTime, _ := p.CreateTime()
@@ -184,8 +196,8 @@ func getProcessInfo(pid int32) (*ProcessInfo, error) {
 		Pgid:       0, // pgid暂时设为0
 		NumThreads: numThreads,
 		MemUsage:   memPercent,
-		MemRSS:     memInfo.RSS,
-		MemVMS:     memInfo.VMS,
+        MemRSS:     memRSS,
+        MemVMS:     memVMS,
 		CPUPercent: cpuPercent,
 		Times:      processTimes,
 		CreateTime: createTime,

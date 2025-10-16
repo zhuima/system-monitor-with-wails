@@ -103,6 +103,18 @@ wails dev
 # 构建生产版本
 ./scripts/build.sh
 
+
+Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}' -ErrorAction SilentlyContinue
+
+
+# 1. 下载 WebView2 安装程序
+Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile "$env:TEMP\MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
+
+# 2. 运行安装程序
+Start-Process -FilePath "$env:TEMP\MicrosoftEdgeWebView2RuntimeInstallerX64.exe" -Wait
+
+
+
 # 或者直接使用 wails 命令
 wails build --platform windows/amd64 --clean --ldflags "-s -w -H windowsgui" --tags "production" --skipbindings
 ```

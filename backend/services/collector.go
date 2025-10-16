@@ -262,16 +262,36 @@ func (cs *CollectorService) StopCollection() {
 
 // GetSystemMetrics 获取系统指标摘要
 func (cs *CollectorService) GetSystemMetrics() (*models.SystemOverview, error) {
-	data, err := cs.GetAllData()
-	if err != nil {
-		return nil, err
-	}
+    data, err := cs.GetAllData()
+    if err != nil {
+        return nil, err
+    }
 
-	systemInfo := data["system"].(*models.SystemInfo)
-	cpuInfo := data["cpu"].(*models.CPUInfo)
-	memoryInfo := data["memory"].(*models.MemoryInfo)
-	diskInfo := data["disk"].([]models.DiskInfo)
-	processes := data["processes"].([]models.ProcessInfo)
+    // 类型断言防护，避免空值或类型不匹配导致 panic
+    var systemInfo *models.SystemInfo
+    if v, ok := data["system"]; ok {
+        systemInfo, _ = v.(*models.SystemInfo)
+    }
+
+    var cpuInfo *models.CPUInfo
+    if v, ok := data["cpu"]; ok {
+        cpuInfo, _ = v.(*models.CPUInfo)
+    }
+
+    var memoryInfo *models.MemoryInfo
+    if v, ok := data["memory"]; ok {
+        memoryInfo, _ = v.(*models.MemoryInfo)
+    }
+
+    var diskInfo []models.DiskInfo
+    if v, ok := data["disk"]; ok {
+        diskInfo, _ = v.([]models.DiskInfo)
+    }
+
+    var processes []models.ProcessInfo
+    if v, ok := data["processes"]; ok {
+        processes, _ = v.([]models.ProcessInfo)
+    }
 
 	// 计算总体磁盘使用率
 	var totalDiskUsage float64
@@ -286,15 +306,25 @@ func (cs *CollectorService) GetSystemMetrics() (*models.SystemOverview, error) {
 		}
 	}
 
-	overview := &models.SystemOverview{
-		SystemInfo:   systemInfo,
-		CPUUsage:     cpuInfo.Usage,
-		MemoryUsage:  memoryInfo.UsedPercent,
-		DiskUsage:    totalDiskUsage,
-		NetworkSpeed: 0, // 暂时设为0，后续实现
-		ProcessCount: len(processes),
-		Timestamp:    time.Now(),
-	}
+    var cpuUsage float64
+    if cpuInfo != nil {
+        cpuUsage = cpuInfo.Usage
+    }
+
+    var memoryUsage float64
+    if memoryInfo != nil {
+        memoryUsage = memoryInfo.UsedPercent
+    }
+
+    overview := &models.SystemOverview{
+        SystemInfo:   systemInfo,
+        CPUUsage:     cpuUsage,
+        MemoryUsage:  memoryUsage,
+        DiskUsage:    totalDiskUsage,
+        NetworkSpeed: 0, // 暂时设为0，后续实现
+        ProcessCount: len(processes),
+        Timestamp:    time.Now(),
+    }
 
 	return overview, nil
 }
