@@ -8,12 +8,11 @@ import Alerts from './pages/Alerts'
 import Settings from './pages/Settings'
 import { useAppStore } from './stores/appStore'
 import { useSystemData } from './hooks/useSystemData'
-import Loading from './components/common/Loading'
 // import { EventsOn } from '../wailsjs/runtime'
 
 function App() {
   const { theme, systemData, setSystemData, setLoading } = useAppStore()
-  const { isLoading, error } = useSystemData()
+  const { isLoading, error, data } = useSystemData()
 
   // 初始化应用
   useEffect(() => {
@@ -56,24 +55,8 @@ function App() {
     }
   }, [theme, setSystemData, setLoading])
 
-  if (isLoading) {
-    return <Loading />
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">
-            加载失败
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            无法连接到后端服务，请检查应用程序是否正常运行。
-          </p>
-        </div>
-      </div>
-    )
-  }
+  // 直接渲染主界面，不再阻塞加载
+  // 错误状态可以在具体页面中处理
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

@@ -1,0 +1,42 @@
+monitoring:
+    refresh_interval: 2
+    max_processes: 50
+    history_retention: 7
+    enable_auto_refresh: true
+    cpu_alert_threshold: 80
+    memory_alert_threshold: 90
+    disk_alert_threshold: 95
+alerts:
+    cpu_threshold: 80
+    memory_threshold: 90
+    disk_threshold: 95
+    network_threshold: 100
+    enable_sounds: true
+    enable_desktop: true
+    email_enabled: false
+    email_recipient: ""
+    webhook_url: ""
+logging:
+    level: info
+    file: data/app.log
+    max_size: 10
+    max_backups: 5
+    max_age: 30
+    compress: true
+    console: true
+database:
+    path: data/history.db
+    max_connections: 10
+    connection_timeout: 5
+    enable_wal: true
+    page_size: 4096
+    cache_size: 1000
+ui:
+    theme: auto
+    language: zh-CN
+    window_width: 1200
+    window_height: 800
+    window_maximized: false
+    show_process_tree: true
+    refresh_rate: 1000
+    show_hidden_files: false

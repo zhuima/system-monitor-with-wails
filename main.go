@@ -212,28 +212,52 @@ func (a *App) OnDomReady(ctx context.Context) {
 	if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
 		debugLog := log.New(debugLogFile, "DEBUG: ", log.LstdFlags)
 		debugLog.Println("🎯 OnDomReady 开始执行")
+		debugLog.Printf("Platform: %s", runtime.GOOS)
+		debugLog.Printf("Windows GUI Mode: true")
 		debugLogFile.Close()
 	}
 	log.Println("🎯 OnDomReady 开始执行")
 
-	// 不要延迟启动，立即启动监控服务（但增加错误处理）
-	if a.monitorService != nil {
-		log.Println("📊 正在启动监控服务...")
-		if err := a.monitorService.Start(); err != nil {
-			log.Printf("⚠️ 监控服务启动失败: %v", err)
-			// 不让这个错误导致应用崩溃，继续运行
-			log.Println("🔄 应用将在无监控服务模式下继续运行")
-		} else {
-			log.Println("✅ 监控服务已启动")
-		}
-	} else {
-		log.Println("⚠️ 监控服务为空，应用将无监控功能")
+	// Windows 特殊处理：延迟启动服务，避免闪屏
+	if runtime.GOOS == "windows" {
+		log.Println("🪟 检测到 Windows 平台，延迟启动服务...")
+		time.Sleep(500 * time.Millisecond) // 延迟 500ms 让前端完全加载
 	}
+
+	// 延迟启动监控服务
+	go func() {
+		time.Sleep(1000 * time.Millisecond) // 额外延迟 1 秒
+
+		if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
+			debugLog := log.New(debugLogFile, "DEBUG: ", log.LstdFlags)
+			debugLog.Println("📊 开始启动监控服务（延迟后）")
+			debugLogFile.Close()
+		}
+
+		if a.monitorService != nil {
+			log.Println("📊 正在启动监控服务...")
+			if err := a.monitorService.Start(); err != nil {
+				log.Printf("⚠️ 监控服务启动失败: %v", err)
+				// 不让这个错误导致应用崩溃，继续运行
+				log.Println("🔄 应用将在无监控服务模式下继续运行")
+			} else {
+				log.Println("✅ 监控服务已启动")
+			}
+		} else {
+			log.Println("⚠️ 监控服务为空，应用将无监控功能")
+		}
+
+		if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
+			debugLog := log.New(debugLogFile, "DEBUG: ", log.LstdFlags)
+			debugLog.Println("✅ 服务启动过程完成")
+			debugLogFile.Close()
+		}
+	}()
 
 	// 立即写入结束日志
 	if debugLogFile, err := os.OpenFile("wails-debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
 		debugLog := log.New(debugLogFile, "DEBUG: ", log.LstdFlags)
-		debugLog.Println("✅ OnDomReady 正常结束")
+		debugLog.Println("✅ OnDomReady 正常结束（服务异步启动中）")
 		debugLogFile.Close()
 	}
 	log.Println("✅ OnDomReady 正常结束")

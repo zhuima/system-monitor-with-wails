@@ -1,49 +1,5 @@
 import { SystemData, Config, AlertRule, Alert, ProcessInfo, HistoryQuery } from '@/types/system'
 
-// Wails API 调用接口
-interface WailsAPI {
-  GetSystemData(): Promise<SystemData>
-  GetHistoryData(metric: string, duration: number): Promise<any>
-  GetProcesses(sortBy: string, order: string, limit: number): Promise<ProcessInfo[]>
-  KillProcess(pid: number): Promise<void>
-  GetAlertRules(): Promise<AlertRule[]>
-  CreateAlertRule(rule: AlertRule): Promise<void>
-  UpdateAlertRule(rule: AlertRule): Promise<void>
-  DeleteAlertRule(id: number): Promise<void>
-  GetAlerts(limit: number): Promise<Alert[]>
-  GetConfig(): Promise<Config>
-  UpdateConfig(config: Config): Promise<void>
-  GetSystemInfo(): Promise<any>
-}
-
-// 动态导入 Wails 生成的 API
-let wailsAPI: WailsAPI | null = null
-
-async function getWailsAPI(): Promise<WailsAPI> {
-  if (!wailsAPI) {
-    try {
-      // 检查是否在开发环境（wailsjs文件不存在）
-      if (import.meta.env.DEV) {
-        console.log('开发环境：使用Mock API')
-        const mockAPI = await import('./api-mock')
-        wailsAPI = mockAPI
-        return wailsAPI
-      }
-
-      // 尝试动态导入 Wails 生成的 Go 方法
-      // 使用 eval 避免静态分析
-      const wailsModule = eval('import("../wailsjs/go/main/App")')
-      wailsAPI = await wailsModule
-    } catch (error) {
-      console.warn('无法加载Wails API，使用Mock数据:', error)
-      // 降级到Mock API
-      const mockAPI = await import('./api-mock')
-      wailsAPI = mockAPI
-    }
-  }
-  return wailsAPI
-}
-
 // API 响应包装器
 interface APIResponse<T> {
   success: boolean
@@ -73,24 +29,37 @@ async function apiCall<T>(fn: () => Promise<T>): Promise<APIResponse<T>> {
   }
 }
 
+// 动态导入Wails API的辅助函数
+async function callWailsAPI<T>(methodName: string, ...args: any[]): Promise<T> {
+  try {
+    // 动态导入Wails生成的API
+    const App = await import('../../wailsjs/go/main/App')
+    const method = (App as any)[methodName]
+    if (!method) {
+      throw new Error(`方法 ${methodName} 不存在`)
+    }
+    return await method(...args)
+  } catch (error) {
+    console.error(`调用 ${methodName} 失败:`, error)
+    throw error
+  }
+}
+
 // 系统数据 API
 export const systemAPI = {
   // 获取当前系统数据
   async getCurrentData(): Promise<APIResponse<SystemData>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.GetSystemData())
+    return apiCall(() => callWailsAPI('GetSystemData'))
   },
 
   // 获取系统基本信息
   async getSystemInfo(): Promise<APIResponse<any>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.GetSystemInfo())
+    return apiCall(() => callWailsAPI('GetSystemInfo'))
   },
 
   // 获取历史数据
   async getHistoryData(query: HistoryQuery): Promise<APIResponse<any>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.GetHistoryData(query.metric, query.duration))
+    return apiCall(() => callWailsAPI('GetHistoryData', query.metric, query.duration))
   },
 }
 
@@ -98,14 +67,12 @@ export const systemAPI = {
 export const processAPI = {
   // 获取进程列表
   async getProcesses(sortBy = 'cpu', order = 'desc', limit = 50): Promise<APIResponse<ProcessInfo[]>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.GetProcesses(sortBy, order, limit))
+    return apiCall(() => callWailsAPI('GetProcesses', sortBy, order, limit))
   },
 
   // 终止进程
   async killProcess(pid: number): Promise<APIResponse<void>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.KillProcess(pid))
+    return apiCall(() => callWailsAPI('KillProcess', pid))
   },
 }
 
@@ -113,32 +80,27 @@ export const processAPI = {
 export const alertAPI = {
   // 获取告警规则
   async getAlertRules(): Promise<APIResponse<AlertRule[]>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.GetAlertRules())
+    return apiCall(() => callWailsAPI('GetAlertRules'))
   },
 
   // 创建告警规则
   async createAlertRule(rule: AlertRule): Promise<APIResponse<void>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.CreateAlertRule(rule))
+    return apiCall(() => callWailsAPI('CreateAlertRule', rule))
   },
 
   // 更新告警规则
   async updateAlertRule(rule: AlertRule): Promise<APIResponse<void>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.UpdateAlertRule(rule))
+    return apiCall(() => callWailsAPI('UpdateAlertRule', rule))
   },
 
   // 删除告警规则
   async deleteAlertRule(id: number): Promise<APIResponse<void>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.DeleteAlertRule(id))
+    return apiCall(() => callWailsAPI('DeleteAlertRule', id))
   },
 
   // 获取告警列表
   async getAlerts(limit = 50): Promise<APIResponse<Alert[]>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.GetAlerts(limit))
+    return apiCall(() => callWailsAPI('GetAlerts', limit))
   },
 }
 
@@ -146,14 +108,12 @@ export const alertAPI = {
 export const configAPI = {
   // 获取配置
   async getConfig(): Promise<APIResponse<Config>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.GetConfig())
+    return apiCall(() => callWailsAPI('GetConfig'))
   },
 
   // 更新配置
   async updateConfig(config: Config): Promise<APIResponse<void>> {
-    const api = await getWailsAPI()
-    return apiCall(() => api.UpdateConfig(config))
+    return apiCall(() => callWailsAPI('UpdateConfig', config))
   },
 }
 
@@ -161,65 +121,76 @@ export const configAPI = {
 export const eventService = {
   // 监听系统数据更新
   onSystemData(callback: (data: SystemData) => void) {
-    if (import.meta.env.DEV) {
-      console.log('开发环境：Mock事件监听')
-      return
-    }
     try {
-      eval('import("../wailsjs/runtime").then(({ EventsOn }) => { EventsOn("system-data", callback) })')
+      // 动态导入事件监听
+      import('../../wailsjs/runtime/runtime').then(({ EventsOn }) => {
+        EventsOn('system-data', callback)
+      }).catch(error => {
+        console.warn('无法监听系统数据事件:', error)
+      })
     } catch (error) {
-      console.warn('无法加载事件监听:', error)
+      console.warn('事件监听初始化失败:', error)
+    }
+    
+    // 返回取消监听的函数
+    return () => {
+      // 这里可以添加取消监听的逻辑
     }
   },
 
   // 监听告警事件
   onAlert(callback: (alert: Alert) => void) {
-    if (import.meta.env.DEV) {
-      console.log('开发环境：Mock告警监听')
-      return
-    }
     try {
-      eval('import("../wailsjs/runtime").then(({ EventsOn }) => { EventsOn("alert", callback) })')
+      import('../../wailsjs/runtime/runtime').then(({ EventsOn }) => {
+        EventsOn('alert', callback)
+      }).catch(error => {
+        console.warn('无法监听告警事件:', error)
+      })
     } catch (error) {
-      console.warn('无法加载告警监听:', error)
+      console.warn('告警事件监听初始化失败:', error)
     }
+    
+    return () => {}
   },
 
   // 监听应用就绪事件
   onAppReady(callback: (data: any) => void) {
-    if (import.meta.env.DEV) {
-      console.log('开发环境：Mock应用就绪监听')
-      return
-    }
     try {
-      eval('import("../wailsjs/runtime").then(({ EventsOn }) => { EventsOn("app-ready", callback) })')
+      import('../../wailsjs/runtime/runtime').then(({ EventsOn }) => {
+        EventsOn('app-ready', callback)
+      }).catch(error => {
+        console.warn('无法监听应用就绪事件:', error)
+      })
     } catch (error) {
-      console.warn('无法加载应用就绪监听:', error)
+      console.warn('应用就绪事件监听初始化失败:', error)
     }
+    
+    return () => {}
   },
 
   // 监听错误事件
   onError(callback: (error: any) => void) {
-    if (import.meta.env.DEV) {
-      console.log('开发环境：Mock错误监听')
-      return
-    }
     try {
-      eval('import("../wailsjs/runtime").then(({ EventsOn }) => { EventsOn("error", callback) })')
+      import('../../wailsjs/runtime/runtime').then(({ EventsOn }) => {
+        EventsOn('error', callback)
+      }).catch(error => {
+        console.warn('无法监听错误事件:', error)
+      })
     } catch (error) {
-      console.warn('无法加载错误监听:', error)
+      console.warn('错误事件监听初始化失败:', error)
     }
+    
+    return () => {}
   },
 }
 
 // 健康检查 API
 export const healthAPI = {
-  // 检查后端连接状态
+  // 检查后端健康状态
   async checkHealth(): Promise<boolean> {
     try {
-      const api = await getWailsAPI()
-      await api.GetSystemInfo()
-      return true
+      const response = await systemAPI.getCurrentData()
+      return response.success
     } catch (error) {
       return false
     }
@@ -227,27 +198,17 @@ export const healthAPI = {
 
   // 获取应用状态
   async getAppStatus(): Promise<APIResponse<{ status: string; version: string }>> {
-    try {
-      const api = await getWailsAPI()
-      const systemInfo = await api.GetSystemInfo()
+    return apiCall(async () => {
+      const isHealthy = await this.checkHealth()
       return {
-        success: true,
-        data: {
-          status: 'running',
-          version: '1.0.0',
-          systemInfo,
-        },
+        status: isHealthy ? 'running' : 'error',
+        version: '1.0.0',
       }
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '未知错误',
-      }
-    }
+    })
   },
 }
 
-// 导出默认 API
+// 默认导出
 export default {
   system: systemAPI,
   process: processAPI,
