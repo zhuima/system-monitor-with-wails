@@ -7,6 +7,7 @@ import History from './pages/History'
 import Alerts from './pages/Alerts'
 import About from './pages/About'
 import Settings from './pages/Settings'
+import Hardware from './pages/Hardware'
 import { useAppStore } from './stores/appStore'
 import { useSystemData } from './hooks/useSystemData'
 // import { EventsOn } from '../wailsjs/runtime'
@@ -68,6 +69,7 @@ function App() {
           <Route path="processes" element={<Processes />} />
           <Route path="history" element={<History />} />
           <Route path="alerts" element={<Alerts />} />
+          <Route path="hardware" element={<Hardware />} />
           <Route path="about" element={<About />} />
           <Route path="settings" element={<Settings />} />
         </Route>

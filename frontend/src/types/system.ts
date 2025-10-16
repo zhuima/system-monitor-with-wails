@@ -403,3 +403,63 @@ export interface ChartData {
   labels: string[]
   datasets: ChartDataset[]
 }
+
+// 新增：硬件参数相关类型
+export interface HardwareComponent {
+  vendor: string
+  model: string
+  version?: string
+  details?: Record<string, string>
+}
+
+export interface MemoryModule {
+  vendor: string
+  model: string
+  size_bytes: number
+  clock_mhz?: number
+  type?: string
+}
+
+export interface MemorySummary {
+  total_bytes: number
+  modules?: MemoryModule[]
+  type?: string
+  clock_mhz?: number
+}
+
+export interface DiskModel {
+  vendor: string
+  model: string
+  serial?: string
+  size_bytes: number
+  type?: string
+}
+
+export interface DisplayInfo {
+  vendor?: string
+  model?: string
+  resolution?: string
+  refresh_rate?: number
+}
+
+export interface BatteryInfo {
+  present: boolean
+  percentage?: number
+  status?: string
+  health?: string
+  vendor?: string
+  model?: string
+}
+
+export interface HardwareInfo {
+  processor: HardwareComponent
+  memory: MemorySummary
+  gpu: HardwareComponent
+  motherboard: HardwareComponent
+  display: DisplayInfo
+  primary_disk: DiskModel
+  nic: HardwareComponent
+  battery: BatteryInfo
+  audio: HardwareComponent
+  timestamp: string
+}

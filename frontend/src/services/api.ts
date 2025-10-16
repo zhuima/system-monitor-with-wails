@@ -1,4 +1,4 @@
-import { SystemData, Config, AlertRule, Alert, ProcessInfo, HistoryQuery } from '@/types/system'
+import { SystemData, Config, AlertRule, Alert, ProcessInfo, HistoryQuery, HardwareInfo } from '@/types/system'
 
 // API 响应包装器
 interface APIResponse<T> {
@@ -33,8 +33,9 @@ async function apiCall<T>(fn: () => Promise<T>): Promise<APIResponse<T>> {
 async function callWailsAPI<T>(methodName: string, ...args: any[]): Promise<T> {
   try {
     // 动态导入Wails生成的API
-    const App = await import('../../wailsjs/go/main/App')
-    const method = (App as any)[methodName]
+    const mod = await import('../../wailsjs/go/main/App')
+    // 兼容可能的默认导出或命名导出差异
+    const method = (mod as any)[methodName] || ((mod as any).default && (mod as any).default[methodName])
     if (!method) {
       throw new Error(`方法 ${methodName} 不存在`)
     }
@@ -60,6 +61,11 @@ export const systemAPI = {
   // 获取历史数据
   async getHistoryData(query: HistoryQuery): Promise<APIResponse<any>> {
     return apiCall(() => callWailsAPI('GetHistoryData', query.metric, query.duration))
+  },
+
+  // 新增：获取硬件参数信息
+  async getHardwareInfo(): Promise<APIResponse<HardwareInfo>> {
+    return apiCall(() => callWailsAPI('GetHardwareInfo'))
   },
 }
 

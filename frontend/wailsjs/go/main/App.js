@@ -22,6 +22,10 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
+export function GetHardwareInfo() {
+  return window['go']['main']['App']['GetHardwareInfo']();
+}
+
 export function GetHistoryData(arg1, arg2) {
   return window['go']['main']['App']['GetHistoryData'](arg1, arg2);
 }

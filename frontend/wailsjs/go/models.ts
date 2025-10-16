@@ -116,6 +116,191 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class BatteryInfo {
+	    present: boolean;
+	    percentage?: number;
+	    status?: string;
+	    health?: string;
+	    vendor?: string;
+	    model?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BatteryInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.present = source["present"];
+	        this.percentage = source["percentage"];
+	        this.status = source["status"];
+	        this.health = source["health"];
+	        this.vendor = source["vendor"];
+	        this.model = source["model"];
+	    }
+	}
+	export class Component {
+	    vendor: string;
+	    model: string;
+	    version?: string;
+	    details?: Record<string, string>;
+	
+	    static createFrom(source: any = {}) {
+	        return new Component(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.vendor = source["vendor"];
+	        this.model = source["model"];
+	        this.version = source["version"];
+	        this.details = source["details"];
+	    }
+	}
+	export class DiskModel {
+	    vendor: string;
+	    model: string;
+	    serial?: string;
+	    size_bytes: number;
+	    type?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DiskModel(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.vendor = source["vendor"];
+	        this.model = source["model"];
+	        this.serial = source["serial"];
+	        this.size_bytes = source["size_bytes"];
+	        this.type = source["type"];
+	    }
+	}
+	export class DisplayInfo {
+	    vendor: string;
+	    model: string;
+	    resolution?: string;
+	    refresh_rate?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DisplayInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.vendor = source["vendor"];
+	        this.model = source["model"];
+	        this.resolution = source["resolution"];
+	        this.refresh_rate = source["refresh_rate"];
+	    }
+	}
+	export class MemoryModule {
+	    vendor: string;
+	    model: string;
+	    size_bytes: number;
+	    clock_mhz: number;
+	    type?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new MemoryModule(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.vendor = source["vendor"];
+	        this.model = source["model"];
+	        this.size_bytes = source["size_bytes"];
+	        this.clock_mhz = source["clock_mhz"];
+	        this.type = source["type"];
+	    }
+	}
+	export class MemorySummary {
+	    total_bytes: number;
+	    modules?: MemoryModule[];
+	    type?: string;
+	    clock_mhz?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new MemorySummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.total_bytes = source["total_bytes"];
+	        this.modules = this.convertValues(source["modules"], MemoryModule);
+	        this.type = source["type"];
+	        this.clock_mhz = source["clock_mhz"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class HardwareInfo {
+	    processor: Component;
+	    memory: MemorySummary;
+	    gpu: Component;
+	    motherboard: Component;
+	    display: DisplayInfo;
+	    primary_disk: DiskModel;
+	    nic: Component;
+	    battery: BatteryInfo;
+	    audio: Component;
+	    // Go type: time
+	    timestamp: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new HardwareInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.processor = this.convertValues(source["processor"], Component);
+	        this.memory = this.convertValues(source["memory"], MemorySummary);
+	        this.gpu = this.convertValues(source["gpu"], Component);
+	        this.motherboard = this.convertValues(source["motherboard"], Component);
+	        this.display = this.convertValues(source["display"], DisplayInfo);
+	        this.primary_disk = this.convertValues(source["primary_disk"], DiskModel);
+	        this.nic = this.convertValues(source["nic"], Component);
+	        this.battery = this.convertValues(source["battery"], BatteryInfo);
+	        this.audio = this.convertValues(source["audio"], Component);
+	        this.timestamp = this.convertValues(source["timestamp"], null);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	
 	export class ProcessTimes {
 	    user: number;
 	    system: number;

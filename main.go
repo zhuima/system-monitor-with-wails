@@ -416,10 +416,16 @@ func (a *App) UpdateConfig(config utils.Config) error {
 
 // GetSystemInfo 获取系统信息
 func (a *App) GetSystemInfo() (models.SystemInfo, error) {
-	if a.monitorService == nil {
-		return models.SystemInfo{}, fmt.Errorf("monitor service not initialized")
-	}
-	return a.monitorService.GetSystemInfo()
+    if a.monitorService == nil {
+        return models.SystemInfo{}, fmt.Errorf("monitor service not initialized")
+    }
+    return a.monitorService.GetSystemInfo()
+}
+
+// GetHardwareInfo 获取硬件参数信息（新页面使用）
+func (a *App) GetHardwareInfo() (*models.HardwareInfo, error) {
+    // 直接调用模型采集函数，避免影响现有服务逻辑
+    return models.NewHardwareInfo()
 }
 
 // main 主函数

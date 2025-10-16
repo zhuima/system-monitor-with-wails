@@ -13,6 +13,8 @@ export function GetAlerts(arg1:number):Promise<Array<models.Alert>>;
 
 export function GetConfig():Promise<utils.Config>;
 
+export function GetHardwareInfo():Promise<models.HardwareInfo>;
+
 export function GetHistoryData(arg1:string,arg2:number):Promise<any>;
 
 export function GetProcesses(arg1:string,arg2:string,arg3:number):Promise<Array<models.ProcessInfo>>;

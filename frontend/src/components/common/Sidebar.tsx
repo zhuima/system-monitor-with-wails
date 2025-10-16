@@ -40,6 +40,11 @@ const navigation = [
     icon: Activity,
   },
   {
+    name: '硬件参数',
+    href: '/hardware',
+    icon: Monitor,
+  },
+  {
     name: '告警管理',
     href: '/alerts',
     icon: Bell,
