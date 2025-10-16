@@ -439,6 +439,10 @@ func main() {
 		Fullscreen:       false,
 		StartHidden:      false,
 		HideWindowOnClose: false,
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId:               "system-monitor-app",
+			OnSecondInstanceLaunch: func(secondInstanceData options.SecondInstanceData) {},
+		},
 		Bind: []interface{}{
 			app,
 		},

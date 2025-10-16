@@ -104,7 +104,7 @@ wails dev
 ./scripts/build.sh
 
 # 或者直接使用 wails 命令
-wails build
+wails build --platform windows/amd64 --clean --ldflags "-s -w -H windowsgui" --tags "production" --skipbindings
 ```
 
 ## 项目状态

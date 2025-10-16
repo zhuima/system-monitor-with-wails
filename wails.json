@@ -24,8 +24,8 @@
   },
   "build": {
     "targets": ["windows", "darwin", "linux"],
-    "upx": true,
-    "upxflags": ["--best", "--lzma"],
+    "upx": false,
+    "upxflags": [],
     "windows": {
       "icon": "build/app.ico",
       "fileversion": "1.0.0.0",
